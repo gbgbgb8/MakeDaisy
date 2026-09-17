@@ -1,0 +1,4 @@
+id3dump
+__pycache__/
+*.pyc
+.DS_Store

@@ -11,7 +11,7 @@ import   html
 # TAGREADER = sys.argv[0][:sys.argv[0].rfind ("\\")] + "\\id3dump"
 # TIDYMP3   = sys.argv[0][:sys.argv[0].rfind ("\\")] + "\\lame -a -t --strictly-enforce-ISO -b56 --resample 44.1"
 TAGREADER = os.path.join (os.path.dirname (sys.argv[0]), "id3dump")
-TIDYMP3   = "lame -a -t --strictly-enforce-ISO -b56 --resample 44.1"
+TIDYMP3   = "lame -q -a -t --strictly-enforce-ISO -b56 --resample 44.1 2>/dev/null"
 bShortStory = 0
 bIgnoreTracks = 0
 bSortFileName = 0
@@ -39,7 +39,7 @@ def GetTags (sFile):
    #  Get tags from text file if ID3 tags are missing or corrupt.
    sTags = sFile[:-4] + ".txt"
    if ( os.path.exists (sTags) ):
-      ReadTags (tags, file (sTags))
+      ReadTags (tags, open (sTags))
    return tags
 
 #  Convert a formatted time string into integer seconds.
@@ -80,15 +80,17 @@ class Chapter:
       self.position = 0
       self.title = sFile
       tags = GetTags (os.path.join (dir, sFile))
-      if ( "Album" in tags ):
-         self.book = tags["Album"]
+      self.book = tags.get ("Album") or tags.get ("album") or ""
       if ( "Title" in tags ):
          self.title = tags["Title"]
-      if ( "Artist" in tags ):
-         self.author = tags["Artist"]
+      self.author = tags.get ("Artist") or ""
       if ( "Track" in tags ):
          self.position = tags["Track"]
-      self.duration = float (tags["Duration"][:-1])
+      dur = tags.get ("Duration") or "0s"
+      try:
+         self.duration = float (dur.rstrip ("sS").strip ())
+      except ValueError:
+         self.duration = 0.0
 
    #  Sort chapters according to track number (if defined), otherwise title.
    def Order (self):
@@ -184,13 +186,17 @@ class Book:
       for file in files:
          if ( fnmatch.fnmatch (file, "*.mp3") ):
             self.contents.append (Chapter (dir, file))
+      if ( not self.contents ):
+         raise SystemExit ("No mp3 files found in " + dir)
       print ("Sorting contents")
       self.contents.sort (key=Chapter.Order)
-      self.title = self.contents[0].book
+      self.title = self.contents[0].book or self.contents[0].title
       if ( os.path.exists ("daisy.txt") ):
          self.BookInfo ("daisy.txt")
       else:
          self.LibriVoxInfo ()
+      if ( not self.title ):
+         self.title = self.contents[0].title
       iPos = 0
       for ch in self.contents:
          iPos = iPos + 1
@@ -208,7 +214,7 @@ class Book:
 
    def BookInfo (self, sInfo):
       tags = {}
-      ReadTags (tags, file (sInfo))
+      ReadTags (tags, open (sInfo))
       if ( "Identifier" in tags ):
          self.identifier = tags["Identifier"]
       if ( "Title" in tags ):

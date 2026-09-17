@@ -2,6 +2,15 @@
 
 This project is dedicated to the memory of my Father for whom it was originally developed.
 
+**Community continuation.** The [original repository](https://github.com/Memotech-Bill/MakeDaisy) is unmaintained (the author noted they no longer have incentive to work on it). This fork keeps the same MIT license and purpose, with small fixes so it still runs on current Python 3 and NLS talking-book USB workflows:
+
+- `file()` → `open()` (Python 3)
+- Missing Album / Artist / Duration tags no longer crash
+- Empty source folder is an error instead of an exception
+- Quieter `lame` (`-q`, progress discarded) so screen readers are not flooded
+
+Use this repo as a drop-in replacement for the original `git clone`.
+
 Many blind or partially sighted people listen to audiobooks on
 [DAISY](https://en.wikipedia.org/wiki/Digital_Accessible_Information_System) players.
 
